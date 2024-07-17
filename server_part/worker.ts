@@ -3,6 +3,8 @@ import axios from "axios";
 import { Worker } from "bullmq";
 import { createConfig } from "./helpers/Config";
 import connection, { redisGetToken } from "./helpers/redis.middleware";
+import { sendEMail } from "./Routes/googleAuthRoutes";
+
 
 type data = {
     to : string
@@ -20,12 +22,8 @@ interface Part {
 
 const sendEmail = async (data :data, jobId : number) =>{
     new Promise(async(req, res) =>{
-        let msg= await parseAndSendMail(data);
-        if(msg){
-            console.log(`job is processed and sent to ${data.to}`);
-            
-        }
-        return msg;
+         await parseAndSendMail(data);
+  
     }).then((res) => console.log(res))
       .catch((err) => console.log(err));
       
@@ -109,12 +107,21 @@ const parseAndSendMail = async (data: data)=> {
         const datatosend = {
             subject,
             textcontext,
-            snippet:message.data.snippet,
+            snippet:message.data.snippet as string,
             label,
             from,
             to,
+            token
         }
-        console.log(datatosend);
+        if(label ==='Interested' || label === 'More Information'){
+        console.log("label is there");
+        
+           await sendEMail(datatosend);
+           console.log("the email is sent to the vijayjulius5555");
+           return;
+        }
+        console.log("the mail is not sent , cuz the label is not interested");
+        
         
 
     }
@@ -123,3 +130,5 @@ const parseAndSendMail = async (data: data)=> {
         throw new Error("error has occured in parseandsendmail , cant fetch mail" + err);
     }
 }
+
+

@@ -124,6 +124,7 @@ export const readMail = async(req : Request, res: Response) =>{
 }
 export const sendMail = async(req :Request , res : Response) =>{
     try{
+    const{from , to} =req.body;
         const token = await redisGetToken(req.body.email) as string;
         if(!token){
             return res.send("The token is not there");
@@ -156,4 +157,54 @@ export const sendMail = async(req :Request , res : Response) =>{
     }
 
 }
+
+type DatatoSend = {
+    subject: string | undefined,
+    textcontext: string,
+    snippet:string,
+    label: string,
+    from: string,
+    to: string
+    token : string
+}
+export const sendEMail = async (data: DatatoSend) => {
+    try {
+      const { from, to, token } = data;
+      console.log(token);
+  
+      const body = data.label as string;
+  
+      console.log("Passed Gmail check");
+  
+      const emailcontent = [
+        `To: ${to}`,
+        "Content-Type: text/plain; charset=utf-8",
+        'Subject: Your Subject Here',
+        "",
+        body
+      ].join("\n");
+  
+      const encodemessagecontent = Buffer.from(emailcontent).toString('base64');
+  
+      console.log("Passed the parsing check");
+  
+      const sendMessageResponse = await axios.post(
+        `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(from)}/messages/send`,
+        {
+          raw: encodemessagecontent
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+  
+      console.log("The email is sent!");
+  
+    } catch (error) {
+      console.error("Error sending email:", error);
+      throw error; // Optional: rethrow the error if needed
+    }
+  };
 export default googleRouter
